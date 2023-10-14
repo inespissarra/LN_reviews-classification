@@ -1,0 +1,7 @@
+1º Modelo: utilização do tf-idf. Accuracy de 69%
+2º Modelo: utilização do tf-idf seguido de naive Bayes- Accuracy de 70.7%
+3º Modelo: Lematização das frazes, utilização do tf-idf seguido de naive Bayes - Accuracy de 79.6%
+4º Modelo: Lematização das frazes, utilização de Jaccard(utilização de algo que nao sabemos o que e), seguido de naive Bayes - Accuracy de 80.7%
+5º Modelo: utilização de tf-idf, com Jaccard - 23.9%
+
+DÚVIDAS: o test set, somos mesmo NÓS a criar ou podem ser selecionados diretamente no train set
