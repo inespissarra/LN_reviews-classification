@@ -181,3 +181,16 @@ def cosine_similarity(query, document):
 ###################################################################################
 
 ###################################################################################
+
+
+# result = -1
+# resultado = []
+# for i in range(len(X_test)):
+#     y_result = ""
+#     result = -1
+#     for j in range(len(X_train)):
+#         new_result = jaccard_similarity(X_test.iloc[i], X_train.iloc[j])
+#         if result > new_result or result == -1:
+#             result = new_result
+#             y_result = y_train.iloc[j]
+#     resultado = resultado + [y_result]

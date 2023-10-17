@@ -5,3 +5,32 @@
 5º Modelo: utilização de tf-idf, com Jaccard - 23.9%
 
 DÚVIDAS: o test set, somos mesmo NÓS a criar ou podem ser selecionados diretamente no train set
+
+
+
+Problema com Lemmatizing: retira os s (was -> wa) nao faz sentido ; fazem mais sentido sem as stop words
+Stemming tambem mas mesmo assim faz qualquer coisa melhor ; fazem mais sentido sem as stop words
+No stopwords, retira o "not" que e importante para a classificacao
+
+
+Palavras chave: great, excellent, awesome, best, gracius, good, nice, amazing, love, perfect, fantastic, wonderful, well, beautiful, happy, fine, cool
+                diappointed, bad, terrible, awful, horrible, worst, issues
+
+Stop words: the, a, an, and, or, if, while, what, which, is, are, was, were, be, been, have, has, had, do, does, did, as, at, by, for, with, about, between, into, through, during, before, after, above, below, to, from, up, down, in, out, on, off, over, under, again, further, then, once, here, there, when, where, why, how, all, any, both, each, few, more, most, other, some, such, only, own, same, so, than, too, very, s, t, can, will, just, don, should, now
+
+
+Abordagem numero ? : uso de lowercase; removing punctuation; removing stopwords; lemmatizing;
+                    problema: estamos a avaliar sentimentos, existe muita coisa a obstruir (p.e) nomes
+
+                    
+
+linha 905 if not best ...  da problemas " I don't believe you will be disapointed." - disapointed indica algo negativo, nosso modelo ignora o facto de estar a ser negado
+
+linha 680 diz never o que pode ser enganoso (queremos positivo e da nos negativo)
+
+tentarn not + palavra e dar mais força aos adjetivos
+
+https://spacy.io/usage/models
+
+
+limitar max_features de maneira a nao haver tanto overfit (so as features mais importantes)
