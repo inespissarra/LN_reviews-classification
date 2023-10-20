@@ -38,6 +38,7 @@ def preprocess(text):
     #tokenize
     words = word_tokenize(text)
     i = 0
+    text = ""
     # transforming <word>n't in <word> not from words
     while i < len(words):
         # remove punctuation from words
