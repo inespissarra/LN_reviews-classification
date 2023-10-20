@@ -20,7 +20,6 @@ nltk.download('stopwords')
 train = pd.read_csv('../train.txt', sep='\t', header=None)
 train.columns = ['Class', 'Text']
 
-classes = ["TRUTHFULPOSITIVE", "TRUTHFULNEGATIVE", "DECEPTIVENEGATIVE", "DECEPTIVEPOSITIVE"]
 
 ################################################################################################
 # Preprocessing
@@ -50,14 +49,14 @@ def preprocess(text):
         else:
             # lemmatizing and Stemming from words
             words[i] = lemmatizer.lemmatize(stemmer.stem(words[i]))
-            #not <word> -> NOT_word se word for adjetivo (ou NEVER)
+            # not <word> -> NOT_word se word for adjetivo (ou NEVER)
             if words[i]=="not" and (i+1)<len(words) and nlp(words[i+1])[0].pos_=="ADJ":
-                words[i] = "NOT_" + words[i+1]
-                words[i+1] = ""
+                words[i] = ""
+                words[i+1] = "NOT_" + words[i+1]
                 i = i+1
             elif words[i]=="never" and (i+1)<len(words):
-                words[i] = "NEVER_" + words[i+1]
-                words[i+1] = ""
+                words[i] = ""
+                words[i+1] = "NEVER_" + words[i+1]
                 i = i+1
         if words[i]!="":
             text = text + " " + words[i]
@@ -91,5 +90,8 @@ print("Accuracy: ", np.mean(cv_scores))
 
 ################################################################################
 
-# sem nots 0.8578708289008717
-# com nots 0.8564371568663415
+# sem nots  0.8407003900566132 com if  0.8385544673098321
+# tirando as palavras depois dos nots 0.8456983725224069 com if  0.8435555066456354
+# com nots ;  com if  0.8435524497756258
+
+################################################################################

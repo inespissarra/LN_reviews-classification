@@ -25,7 +25,7 @@ train.columns = ['Class', 'Text']
 # Preprocessing
 
 stop = stopwords.words('english')
-including = ['no', 'nor', 'not', 'but', 'against', 'only', 'if'] # rever 
+including = ['no', 'nor', 'not', 'but', 'against', 'only'] # rever 
 lemmatizer = WordNetLemmatizer()
 stemmer = PorterStemmer()
 nlp = spacy.load("en_core_web_sm")
@@ -50,14 +50,14 @@ def preprocess(text):
             # lemmatizing and Stemming from words
             words[i] = lemmatizer.lemmatize(stemmer.stem(words[i]))
             # not <word> -> NOT_word se word for adjetivo (ou NEVER)
-            # if words[i]=="not" and (i+1)<len(words) and nlp(words[i+1])[0].pos_=="ADJ":
-            #     words[i] = ""
-            #     words[i+1] = "NOT_" + words[i+1]
-            #     i = i+1
-            # elif words[i]=="never" and (i+1)<len(words):
-            #     words[i] = ""
-            #     words[i+1] = "NEVER_" + words[i+1]
-            #     i = i+1
+            if words[i]=="not" and (i+1)<len(words) and nlp(words[i+1])[0].pos_=="ADJ":
+                words[i] = ""
+                words[i+1] = "NOT_" + words[i+1]
+                i = i+1
+            elif words[i]=="never" and (i+1)<len(words):
+                words[i] = ""
+                words[i+1] = "NEVER_" + words[i+1]
+                i = i+1
         if words[i]!="":
             text = text + " " + words[i]
         i = i+1
@@ -72,11 +72,11 @@ y = train['Class']
 
 ##################################################################################
 
-number_tests = 10
+number_tests = 1
 sum = 0
 
 for i in range(number_tests):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.05, random_state=i)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.05, random_state=40)
 
     pd.DataFrame(X_test).to_csv("X_test.txt", sep="\t", index=False, header=False)
 
