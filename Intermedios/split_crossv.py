@@ -16,14 +16,14 @@ import string
 nltk.download('stopwords')
 
 
-train = pd.read_csv('train.txt', sep='\t', header=None)
+train = pd.read_csv('../train.txt', sep='\t', header=None)
 train.columns = ['Class', 'Text']
 
 ################################################################################################
 # Preprocessing
 
 stop = stopwords.words('english')
-including = ['no', 'nor', 'not', 'but', 'against', 'only'] # rever 
+including = ['no', 'nor', 'not', 'but', 'against', 'only', 'if'] # rever 
 lemmatizer = WordNetLemmatizer()
 stemmer = PorterStemmer()
 nlp = spacy.load("en_core_web_sm")
@@ -80,3 +80,7 @@ model = make_pipeline(vectorizer, svc)
 cv_scores = cross_val_score(model, X, y, cv=6)
 
 print("Accuracy: ", np.mean(cv_scores) )
+
+
+# com nots sem if 0.8435585635156452 ; com if 0.8414126407688641
+# sem nots sem if 0.8435555066456354 ; com if 0.8428371421933655

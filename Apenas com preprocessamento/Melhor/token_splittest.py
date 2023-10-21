@@ -18,7 +18,7 @@ from nltk.tokenize import word_tokenize
 nltk.download('stopwords')
 
 
-train = pd.read_csv('../train.txt', sep='\t', header=None)
+train = pd.read_csv('../../train.txt', sep='\t', header=None)
 train.columns = ['Class', 'Text']
 
 ################################################################################################
@@ -72,11 +72,11 @@ y = train['Class']
 
 ##################################################################################
 
-number_tests = 10
+number_tests = 1
 sum = 0
 
 for i in range(number_tests):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.05, random_state=i)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.05, random_state=40)
 
     pd.DataFrame(X_test).to_csv("X_test.txt", sep="\t", index=False, header=False)
 
