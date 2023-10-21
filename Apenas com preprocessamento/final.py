@@ -52,6 +52,11 @@ def preprocess(text):
         else:
             # lemmatizing and Stemming from words
             words[i] = lemmatizer.lemmatize(stemmer.stem(words[i]))
+
+
+            #******************* Ainda nao percebi se é melhor com ou sem *******************
+            # (mas acho que sem)
+
             # not <word> -> NOT_word se word for adjetivo (ou NEVER)
             # if words[i]=="not" and (i+1)<len(words) and nlp(words[i+1])[0].pos_=="ADJ":
             #     words[i] = ""
