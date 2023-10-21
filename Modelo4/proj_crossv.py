@@ -7,15 +7,15 @@ from nltk.corpus import stopwords
 import spacy
 from nltk.stem import PorterStemmer
 import string
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 from nltk.tokenize import word_tokenize
-from sklearn.metrics import classification_report
-import sklearn_crfsuite
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import numpy as np
-from sklearn.model_selection import cross_val_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 
 nltk.download('stopwords')
 nltk.download('vader_lexicon')
@@ -44,7 +44,6 @@ def preprocess(text):
     words = word_tokenize(text)
     i = 0
     text = ""
-    # transforming <word>n't in <word> not from words
     while i < len(words):
         # remove punctuation from words
         words[i] = ''.join([char for char in words[i] if char not in string.punctuation])
@@ -63,8 +62,6 @@ def preprocess(text):
 
 train['Text'] = train['Text'].apply(preprocess)
 
-print("after preprocessing")
-
 
 ##################################################################################
 #         Extracts features (and convert them to sklearn-crfsuite format)
@@ -76,6 +73,7 @@ negation = ["not", "no", "never", "neither", "nor", "none", "nobody", "nowhere",
 sentiment = SentimentIntensityAnalyzer()
 def review2features(review):
     tokens = nltk.word_tokenize(review)
+    freq_adjectives = 0
     pos = 0
     neg = 0
     for i in range(len(tokens)):
@@ -87,10 +85,13 @@ def review2features(review):
             pos = pos + pol['compound']
         else:
             neg = neg - pol['compound']
+        if nltk.pos_tag([tokens[i]])[0][1] in ["JJ", "JJR", "JJS"]:                              # isto está a funcionar?  
+            freq_adjectives = freq_adjectives + 1
     pos = pos / len(tokens)
     neg = neg / len(tokens)
     polarity = pos - neg
-    features = [polarity]
+    freq_adjectives = freq_adjectives / len(tokens)
+    features = [polarity, freq_adjectives] #, freq_adjectives, pos, neg,]
     return features
 
 
@@ -101,8 +102,6 @@ X = [review2features(review) for review in train['Text']]
 
 y = train['Class']
 
-print("after features")
-
 
 ##################################################################################
 #                                      TF-IDF
@@ -111,8 +110,6 @@ print("after features")
 tfidf = TfidfVectorizer(use_idf=True, ngram_range=(1, 3), sublinear_tf=True, max_features=20000)
 tfidf_matrix = tfidf.fit_transform(train['Text']).toarray()
 
-print("after tfidf")
-
 
 ##################################################################################
 #                                     Combine
@@ -120,18 +117,45 @@ print("after tfidf")
 
 combined_features = np.hstack((tfidf_matrix, np.array(X)))
 
-print("after combine")
-
-
 ##################################################################################
 #                                     SVM
 ##################################################################################
-clf = svm.SVC(kernel='linear')
+clf = svm.SVC(kernel='linear', class_weight='balanced')
 
+################################################################################
 
 # Cross Validation
-scores = cross_val_score(clf, combined_features, y, cv=6)
-print("Accuracy: ", np.mean(scores))
+cv_predictions = cross_val_predict(clf, combined_features, y, cv=5)
+
+pd.DataFrame(cv_predictions).to_csv("modelo4.txt", sep="\t", index=False, header=False)
+
+print("Accuracy: ", accuracy_score(y, cv_predictions)) 
 
 
-# 0.8507024687282199
+##################################################################################
+
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+cm = confusion_matrix(y, cv_predictions, labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE'])
+
+labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE']
+
+# Print the results
+print("Confusion Matrix:")
+print(cm)
+plt.figure(figsize=(8, 6), dpi=100)
+
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels, annot_kws={"size": 16}, square=True)
+
+plt.xlabel('Predicted')
+plt.ylabel('Real')
+plt.xticks(rotation=45)
+plt.yticks(rotation=45)
+plt.title('Confusion Matrix')
+plt.show()
+
+
+##################################################################################
+# Accuracy:  0.8485714285714285

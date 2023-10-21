@@ -33,8 +33,6 @@ nlp = spacy.load("en_core_web_sm")
 def preprocess(text):
     # lowercase
     text = text.lower()
-    # transforming <word>n't in <word> not from words
-    text = text.replace("n't", " not")
     #tokenize
     words = word_tokenize(text)
     i = 0
@@ -49,15 +47,6 @@ def preprocess(text):
         else:
             # lemmatizing and Stemming from words
             words[i] = stemmer.stem(lemmatizer.lemmatize(words[i]))
-            # not <word> -> NOT_word se word for adjetivo (ou NEVER)
-            if words[i]=="not" and (i+1)<len(words) and nlp(words[i+1])[0].pos_=="ADJ":
-                words[i] = ""
-                words[i+1] = "NOT_" + words[i+1]
-                i = i+1
-            elif words[i]=="never" and (i+1)<len(words):
-                words[i] = ""
-                words[i+1] = "NEVER_" + words[i+1]
-                i = i+1
         if words[i]!="":
             text = text + " " + words[i]
         i = i+1
@@ -65,15 +54,13 @@ def preprocess(text):
 
 train['Text'] = train['Text'].apply(preprocess)
 
-open("preprocessed.txt", "w").write(train['Text'].to_csv(sep="\t", index=False, header=False))
-
 X = train['Text']
 y = train['Class']
 
 ##################################################################################
 # Vectorize the text data using TF-IDF
 
-vectorizer = TfidfVectorizer(use_idf=True, ngram_range=(1, 4), sublinear_tf=True, max_features=20000)
+vectorizer = TfidfVectorizer(use_idf=True, ngram_range=(1, 3), sublinear_tf=True, max_features=20000)
 
 ################################################################################
 # suport vector machine
@@ -81,17 +68,42 @@ vectorizer = TfidfVectorizer(use_idf=True, ngram_range=(1, 4), sublinear_tf=True
 svc = svm.SVC(kernel='linear', class_weight='balanced')
 
 ################################################################################
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 
 model = make_pipeline(vectorizer, svc)
 
-cv_scores = cross_val_score(model, X, y, cv=6)
+cv_predictions = cross_val_predict(model, X, y, cv=5)
 
-print("Accuracy: ", np.mean(cv_scores))
+pd.DataFrame(cv_predictions).to_csv("modelo3_t4.txt", sep="\t", index=False, header=False)
 
-################################################################################
+print("Accuracy: ", accuracy_score(y, cv_predictions)) 
 
-# sem nots  0.8407003900566132 com if  0.8385544673098321
-# tirando as palavras depois dos nots 0.8456983725224069 com if  0.8435555066456354
-# com nots ;  com if  0.8435524497756258
 
-################################################################################
+##################################################################################
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+cm = confusion_matrix(y, cv_predictions, labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE'])
+
+labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE']
+
+# Print the results
+print("Confusion Matrix:")
+print(cm)
+plt.figure(figsize=(8, 6), dpi=100)
+
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels, annot_kws={"size": 16}, square=True)
+
+plt.xlabel('Predicted')
+plt.ylabel('Real')
+plt.xticks(rotation=45)
+plt.yticks(rotation=45)
+plt.title('Confusion Matrix')
+plt.show()
+
+
+##################################################################################
+# Accuracy:  0.8457142857142858

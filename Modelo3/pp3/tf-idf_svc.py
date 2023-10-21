@@ -11,38 +11,31 @@ from sklearn.pipeline import make_pipeline
 from nltk.stem import PorterStemmer
 import string
 
-
-
 nltk.download('stopwords')
 
-
-train = pd.read_csv('../train.txt', sep='\t', header=None)
+train = pd.read_csv('../../train.txt', sep='\t', header=None)
 train.columns = ['Class', 'Text']
 
 ################################################################################################
 # Preprocessing
 
 stop = stopwords.words('english')
-including = ['no', 'nor', 'not', 'but', 'against', 'only', 'if'] # rever 
-lemmatizer = WordNetLemmatizer()
-stemmer = PorterStemmer()
 nlp = spacy.load("en_core_web_sm")
+including = ['no', 'nor', 'not', 'but', 'against', 'only', 'if']
+lemmatizer = WordNetLemmatizer()
 
 def preprocess(text):
     # lowercase
     text = text.lower()
-    # transforming <word>n't in <word> not
+    #transforming <word>n't in <word> not
     text = text.replace("n't", " not")
-    # Remove links 
-    text = ' '.join([word for word in text.split() if not word.startswith("http")])
     # Remove punctuation
     text = ''.join([char for char in text if char not in string.punctuation])
     #Remove stopwords
-    text = ' '.join([word for word in text.split() if (word not in stop) or (word in including)])
+    text = ' '.join([word for word in text.split() if ((word not in stop) or (word in including))])
     # lemmatizing and Stemming
-    text = ' '.join([lemmatizer.lemmatize(stemmer.stem(word)) for word in text.split()])
+    text = ' '.join([lemmatizer.lemmatize(word) for word in text.split()]) # stemmer.stem(word)
 
-    #not <word> -> NOT_word se word for adjetivo usando spacy
     i = 0
     words = text.split()
     while i < len(words):
@@ -58,8 +51,6 @@ def preprocess(text):
 
 train['Text'] = train['Text'].apply(preprocess)
 
-open("preprocessed.txt", "w").write(train['Text'].to_csv(sep="\t", index=False, header=False))
-
 X = train['Text']
 y = train['Class']
 
@@ -74,13 +65,42 @@ vectorizer = TfidfVectorizer(use_idf=True, ngram_range=(1, 3), sublinear_tf=True
 svc = svm.SVC(kernel='linear', class_weight='balanced')
 
 ################################################################################
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 
 model = make_pipeline(vectorizer, svc)
 
-cv_scores = cross_val_score(model, X, y, cv=6)
+cv_predictions = cross_val_predict(model, X, y, cv=5)
 
-print("Accuracy: ", np.mean(cv_scores) )
+pd.DataFrame(cv_predictions).to_csv("modelo3_t3.txt", sep="\t", index=False, header=False)
+
+print("Accuracy: ", accuracy_score(y, cv_predictions)) 
 
 
-# com nots sem if 0.8435585635156452 ; com if 0.8414126407688641
-# sem nots sem if 0.8435555066456354 ; com if 0.8428371421933655
+##################################################################################
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+cm = confusion_matrix(y, cv_predictions, labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE'])
+
+labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE']
+
+# Print the results
+print("Confusion Matrix:")
+print(cm)
+plt.figure(figsize=(8, 6), dpi=100)
+
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels, annot_kws={"size": 16}, square=True)
+
+plt.xlabel('Predicted')
+plt.ylabel('Real')
+plt.xticks(rotation=45)
+plt.yticks(rotation=45)
+plt.title('Confusion Matrix')
+plt.show()
+
+
+##################################################################################
+# Accuracy: 0.8407142857142857
