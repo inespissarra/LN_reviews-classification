@@ -101,6 +101,17 @@ X = [review2features(review) for review in train['Text']]
 
 y = train['Class']
 
+y1 = []
+y2 = []
+for i in range(len(y)):
+    if 'TRUTHFUL' in y[i]:
+        y1.append('TRUTHFUL')
+    else:
+        y1.append('DECEPTIVE')
+    if 'POSITIVE' in y[i]:
+        y2.append('POSITIVE')
+    else:
+        y2.append('NEGATIVE')
 
 ##################################################################################
 #                                      TF-IDF
@@ -119,14 +130,22 @@ combined_features = np.hstack((tfidf_matrix, np.array(X)))
 ##################################################################################
 #                                     SVM
 ##################################################################################
-clf = svm.SVC(kernel='linear', class_weight='balanced')
+clf1 = svm.SVC(kernel='linear', class_weight='balanced')
+
+clf2 = svm.SVC(kernel='linear', class_weight='balanced')
 
 ################################################################################
 
 # Cross Validation
-cv_predictions = cross_val_predict(clf, combined_features, y, cv=5)
+cv_predictions1 = cross_val_predict(clf1, combined_features, y1, cv=5)
 
-pd.DataFrame(cv_predictions).to_csv("modelo4.txt", sep="\t", index=False, header=False)
+cv_predictions2 = cross_val_predict(clf2, combined_features, y2, cv=5)
+
+cv_predictions = []
+for i in range(len(cv_predictions1)):
+    cv_predictions.append(cv_predictions1[i] + cv_predictions2[i])
+
+pd.DataFrame(cv_predictions).to_csv("modelo5.txt", sep="\t", index=False, header=False)
 
 print("Accuracy: ", accuracy_score(y, cv_predictions)) 
 
@@ -152,9 +171,9 @@ plt.xlabel('Predicted')
 plt.ylabel('Real')
 plt.xticks(rotation=45)
 plt.yticks(rotation=45)
-plt.title('Confusion Matrix TF-IDF + SVM c/features')
+plt.title('Confusion Matrix TF-IDF & SVM c/feat c/sep')
 plt.show()
 
 
 ##################################################################################
-# Accuracy:  0.8485714285714285
+# Accuracy:  

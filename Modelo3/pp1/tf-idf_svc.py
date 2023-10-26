@@ -58,6 +58,10 @@ pd.DataFrame(cv_predictions).to_csv("modelo3_t1.txt", sep="\t", index=False, hea
 
 print("Accuracy: ", accuracy_score(y, cv_predictions)) 
 
+with open('predicted_vs_true.txt', 'w') as output_file:
+    for review, expected, predicted in zip(X, y, cv_predictions):
+        output_file.write(f"Filtered Review: {review}\nExpected Label: {expected}, Predicted Label: {predicted}\n")
+
 
 ##################################################################################
 from sklearn.metrics import confusion_matrix

@@ -14,60 +14,42 @@ import spacy
 nltk.download('stopwords')
 
 
-train = pd.read_csv('train.txt', sep='\t', header=None)
+train = pd.read_csv('../train.txt', sep='\t', header=None)
 train.columns = ['Class', 'Text']
-
-classes = ["TRUTHFULPOSITIVE", "TRUTHFULNEGATIVE", "DECEPTIVENEGATIVE", "DECEPTIVEPOSITIVE"]
 
 ################################################################################################
 # Preprocessing
 
 stop = stopwords.words('english')
-including = ['no', 'nor', 'not', 'but', 'against', 'most', 'more', 'over', 'just', 'same', 'must'] # rever 
+print(stop)
 lemmatizer = WordNetLemmatizer()
 nlp = spacy.load("en_core_web_sm")
+from nltk.tokenize import word_tokenize
 
 def preprocess(text):
     # lowercase
     text = text.lower()
-    # transforming <word>n't in <word> not
-    # if "can't" in text or "cannot" in text:
-    #     text = text.replace("can't", "can not")
-    #     text = text.replace("cannot", "can not")
-    # if "won't" in text:
-    #     text = text.replace("won't", "will not")
-    if "n't" in text:
-        text = text.replace("n't", " not")
-    # transforming <word>'s in <word> s
-    if "'" in text:
-        text = text.replace("'", " ")
-    # Remove non-alphanumeric characters and keep only alphabets
-    text = ''.join([char for char in text if char.isalpha() or char.isspace()])
     #Remove stopwords
-    text = ' '.join([word for word in text.split() if (word not in stop) or (word in including)])
-    # lemmatizing   
-    text = ' '.join([lemmatizer.lemmatize(word) for word in text.split()])
-
-    #not <word> -> NOT_word se word for adjetivo usando spacy (piora)
+    words = word_tokenize(text)
     i = 0
-    words = text.split()
+    text = ""
     while i < len(words):
-        if words[i]=="not" and (i+1)<len(words) and nlp(words[i+1])[0].pos_=="ADJ": #  or nlp(words[i+1])[0].pos_=="VERB"
-            text = text.replace("not " + words[i+1] + " ", "NOT_" + words[i+1] + " ")
-            i = i+1
+        if words[i] not in stop:
+            text = text + " " + words[i]
         i = i+1
         
     return text
 
 train['Text'] = train['Text'].apply(preprocess)
 
-open("preprocessed.txt", "w").write(train['Text'].to_csv(sep="\t", index=False, header=False))
-
 X = train['Text']
 y = train['Class']
 
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+pd.DataFrame(X_test).to_csv('X_test.txt', index=False, header=False)
+pd.DataFrame(y_test).to_csv('y_test.txt', index=False, header=False)
 
 ##################################################################################
 
@@ -108,3 +90,31 @@ def classifier(jaccard_matrix, y_train):
 predictions = classifier(jaccard_matrix, y_train)
 accuracy = accuracy_score(y_test, predictions)
 print("Accuracy Jaccard:", accuracy)
+
+pd.DataFrame(predictions).to_csv('modelo1.txt', index=False, header=False)
+
+##################################################################################
+# # Do the matrix of confusion
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+cm = confusion_matrix(y_test, predictions, labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE'])
+
+labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE']
+
+# Print the results
+print("Confusion Matrix:")
+print(cm)
+plt.figure(figsize=(8, 6), dpi=100)
+
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels, annot_kws={"size": 16}, square=True)
+
+plt.xlabel('Predicted')
+plt.ylabel('Real')
+plt.xticks(rotation=45)
+plt.yticks(rotation=45)
+plt.title('Confusion Matrix')
+plt.show()
+
+# 0.5714285714285714

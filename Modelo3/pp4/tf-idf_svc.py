@@ -101,7 +101,7 @@ plt.xlabel('Predicted')
 plt.ylabel('Real')
 plt.xticks(rotation=45)
 plt.yticks(rotation=45)
-plt.title('Confusion Matrix')
+plt.title('Confusion Matrix TF-IDF & SVM (PP4)')
 plt.show()
 
 

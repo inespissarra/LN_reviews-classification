@@ -21,7 +21,7 @@ train.columns = ['Class', 'Text']
 
 stop = stopwords.words('english')
 nlp = spacy.load("en_core_web_sm")
-including = ['no', 'nor', 'not', 'but', 'against', 'only', 'if']
+including = ['no', 'nor', 'not', 'but', 'against', 'only', 'if', 'again']
 lemmatizer = WordNetLemmatizer()
 
 def preprocess(text):
@@ -44,7 +44,7 @@ y = train['Class']
 ##################################################################################
 # Vectorize the text data using TF-IDF
 
-vectorizer = TfidfVectorizer(use_idf=True, ngram_range=(1, 3), sublinear_tf=True, max_features=20000)
+vectorizer = TfidfVectorizer(use_idf=True)
 
 ################################################################################
 # suport vector machine
@@ -63,6 +63,11 @@ cv_predictions = cross_val_predict(model, X, y, cv=5)
 pd.DataFrame(cv_predictions).to_csv("modelo3_t2.txt", sep="\t", index=False, header=False)
 
 print("Accuracy: ", accuracy_score(y, cv_predictions)) 
+
+with open('predicted_vs_true.txt', 'w') as output_file:
+    for review, expected, predicted in zip(X, y, cv_predictions):
+        output_file.write(f"Filtered Review: {review}\nExpected Label: {expected}, Predicted Label: {predicted}\n")
+
 
 
 ##################################################################################
@@ -90,4 +95,4 @@ plt.show()
 
 
 ##################################################################################
-# Accuracy:  0.8435714285714285
+# Accuracy:  0.8092857142857143

@@ -25,8 +25,10 @@ nltk.download('vader_lexicon')
 #                             Read the input database
 ##################################################################################
 
-train = pd.read_csv('../train.txt', sep='\t', header=None)
+train = pd.read_csv('train.txt', sep='\t', header=None)
 train.columns = ['Class', 'Text']
+
+test = pd.read_csv('test_just_reviews.txt', sep='\t', header=None)
 
 
 ##################################################################################
@@ -61,6 +63,8 @@ def preprocess(text):
     return text
 
 train['Text'] = train['Text'].apply(preprocess)
+test = test[0].apply(preprocess)
+
 
 
 ##################################################################################
@@ -84,23 +88,35 @@ def review2features(review):
             pos = pos + pol['compound']
         else:
             neg = neg - pol['compound']
-        if nltk.pos_tag([tokens[i]])[0][1] in ["JJ", "JJR", "JJS"]:                              # isto está a funcionar?  
+        if nltk.pos_tag([tokens[i]])[0][1] in ["JJ", "JJR", "JJS"]: 
             freq_adjectives = freq_adjectives + 1
     pos = pos / len(tokens)
     neg = neg / len(tokens)
     polarity = pos - neg
     freq_adjectives = freq_adjectives / len(tokens)
-    features = [polarity, freq_adjectives] #, freq_adjectives, pos, neg,]
+    features = [polarity, freq_adjectives]
     return features
 
 
 ##################################################################################
 #               Creates different vectors (features, tags and tokens)
 ##################################################################################
-X = [review2features(review) for review in train['Text']]
+X_train = [review2features(review) for review in train['Text']]
+X_test = [review2features(review) for review in test]
 
-y = train['Class']
+y_train = train['Class']
 
+y1 = []
+y2 = []
+for i in range(len(y_train)):
+    if 'TRUTHFUL' in y_train[i]:
+        y1.append('TRUTHFUL')
+    else:
+        y1.append('DECEPTIVE')
+    if 'POSITIVE' in y_train[i]:
+        y2.append('POSITIVE')
+    else:
+        y2.append('NEGATIVE')
 
 ##################################################################################
 #                                      TF-IDF
@@ -108,53 +124,29 @@ y = train['Class']
 
 tfidf = TfidfVectorizer(use_idf=True, ngram_range=(1, 3), sublinear_tf=True, max_features=20000)
 tfidf_matrix = tfidf.fit_transform(train['Text']).toarray()
+tfidf_matrix_test = tfidf.transform(test).toarray()
 
 
 ##################################################################################
 #                                     Combine
 ##################################################################################
 
-combined_features = np.hstack((tfidf_matrix, np.array(X)))
+combined_features = np.hstack((tfidf_matrix, np.array(X_train)))
+combined_features_test = np.hstack((tfidf_matrix_test, np.array(X_test)))
 
 ##################################################################################
 #                                     SVM
 ##################################################################################
-clf = svm.SVC(kernel='linear', class_weight='balanced')
+clf1 = svm.SVC(kernel='linear', class_weight='balanced')
+clf1 = clf1.fit(combined_features, y1)
+clf2 = svm.SVC(kernel='linear', class_weight='balanced')
+clf2 = clf2.fit(combined_features, y2)
 
-################################################################################
+predictions1 = clf1.predict(combined_features_test)
+predictions2 = clf2.predict(combined_features_test)
 
-# Cross Validation
-cv_predictions = cross_val_predict(clf, combined_features, y, cv=5)
+predictions = []
+for i in range(len(predictions1)):
+    predictions.append(predictions1[i] + predictions2[i])
 
-pd.DataFrame(cv_predictions).to_csv("modelo4.txt", sep="\t", index=False, header=False)
-
-print("Accuracy: ", accuracy_score(y, cv_predictions)) 
-
-
-##################################################################################
-
-from sklearn.metrics import confusion_matrix
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-cm = confusion_matrix(y, cv_predictions, labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE'])
-
-labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE']
-
-# Print the results
-print("Confusion Matrix:")
-print(cm)
-plt.figure(figsize=(8, 6), dpi=100)
-
-sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels, annot_kws={"size": 16}, square=True)
-
-plt.xlabel('Predicted')
-plt.ylabel('Real')
-plt.xticks(rotation=45)
-plt.yticks(rotation=45)
-plt.title('Confusion Matrix TF-IDF + SVM c/features')
-plt.show()
-
-
-##################################################################################
-# Accuracy:  0.8485714285714285
+pd.DataFrame(predictions).to_csv("results.txt", sep="\t", index=False, header=False)

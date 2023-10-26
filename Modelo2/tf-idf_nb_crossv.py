@@ -50,6 +50,10 @@ pd.DataFrame(cv_predictions).to_csv("modelo2_t2.txt", sep="\t", index=False, hea
 
 print("Accuracy: ", accuracy_score(y, cv_predictions)) 
 
+with open('predicted_vs_true.txt', 'w') as output_file:
+    for review, expected, predicted in zip(X, y, cv_predictions):
+        output_file.write(f"Filtered Review: {review}\nExpected Label: {expected}, Predicted Label: {predicted}\n")
+
 ##################################################################################
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
@@ -60,7 +64,7 @@ cm = confusion_matrix(y, cv_predictions, labels = ['TRUTHFULPOSITIVE', 'TRUTHFUL
 labels = ['TRUTHFULPOSITIVE', 'TRUTHFULNEGATIVE', 'DECEPTIVEPOSITIVE','DECEPTIVENEGATIVE']
 
 # Print the results
-print("Confusion Matrix:")
+print("Confusion Matrix TF-IDF & NB:")
 print(cm)
 plt.figure(figsize=(8, 6), dpi=100)
 
@@ -70,7 +74,7 @@ plt.xlabel('Predicted')
 plt.ylabel('Real')
 plt.xticks(rotation=45)
 plt.yticks(rotation=45)
-plt.title('Confusion Matrix')
+plt.title('Confusion Matrix TF-IDF & NB')
 plt.show()
 
 
